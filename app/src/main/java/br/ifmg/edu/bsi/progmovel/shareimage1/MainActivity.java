@@ -6,11 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.view.View;
@@ -25,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly;
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.exifinterface.media.ExifInterface;
 
 import java.io.BufferedOutputStream;
 import java.io.FileDescriptor;
@@ -38,39 +37,40 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView;
     private MemeCreator memeCreator;
-    private ActivityResultLauncher<Intent> startNovoTexto = registerForActivityResult(new StartActivityForResult(),
+    private final ActivityResultLauncher<Intent> startNovoTexto = registerForActivityResult(new StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent intent = result.getData();
-                        String novoTexto = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVO_TEXTO);
-                        String novaCor = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVA_COR);
-                        if (novaCor == null) {
-                            Toast.makeText(MainActivity.this, "Cor desconhecida. Usando preto no lugar.", Toast.LENGTH_SHORT);
-                            novaCor = "BLACK";
+                        if (intent != null) {
+                            String novoTexto = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVO_TEXTO);
+                            String novaCor = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVA_COR);
+                            if (novaCor == null) {
+                                Toast.makeText(MainActivity.this, "Cor desconhecida. Usando preto no lugar.", Toast.LENGTH_SHORT).show();
+                                novaCor = "BLACK";
+                            }
+                            memeCreator.setTexto(novoTexto);
+                            memeCreator.setCorTexto(Color.parseColor(novaCor.toUpperCase()));
+                            mostrarImagem();
                         }
-
-                        memeCreator.setTexto(novoTexto);
-                        memeCreator.setCorTexto(Color.parseColor(novaCor.toUpperCase()));
-                        mostrarImagem();
                     }
                 }
             });
 
-    private ActivityResultLauncher<PickVisualMediaRequest> startImagemFundo = registerForActivityResult(new PickVisualMedia(),
+    private final ActivityResultLauncher<PickVisualMediaRequest> startImagemFundo = registerForActivityResult(new PickVisualMedia(),
             new ActivityResultCallback<Uri>() {
                 @Override
                 public void onActivityResult(Uri result) {
                     if (result == null) {
                         return;
                     }
-                    try {
+                    try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(result, "r")) {
                         Bitmap imagemFundo = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), result);
                         memeCreator.setFundo(imagemFundo);
 
                         // descobrir se é preciso rotacionar a imagem
-                        FileDescriptor fd = getContentResolver().openFileDescriptor(result, "r").getFileDescriptor();
+                        FileDescriptor fd = pfd.getFileDescriptor();
                         ExifInterface exif = new ExifInterface(fd);
                         int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
                         if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
                         mostrarImagem();
                     } catch (IOException e) {
-                        Toast.makeText(MainActivity.this, "Erro: " + e.getMessage(), Toast.LENGTH_LONG);
+                        Toast.makeText(MainActivity.this, "Erro: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         e.printStackTrace();
                     }
                 }
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        imageView = (ImageView) findViewById(R.id.imageView);
+        imageView = findViewById(R.id.imageView);
 
         Bitmap imagemFundo = BitmapFactory.decodeResource(getResources(), R.drawable.fry_meme);
 
@@ -134,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
     public void compartilharImagem(Bitmap bitmap) {
 
         // pegar a uri da mediastore
+        // pego o volume externo pq normalmente ele é maior que o volume interno.
         Uri contentUri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
@@ -145,10 +146,9 @@ public class MainActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, "shareimage1file");
         values.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
         Uri imageUri = getContentResolver().insert(contentUri, values);
 
-        // criar a nova imagem na pasta
+        // criar a nova imagem na pasta da mediastore
         try (
                 ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(imageUri, "w");
                 FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor())
@@ -156,15 +156,16 @@ public class MainActivity extends AppCompatActivity {
             BufferedOutputStream bytes = new BufferedOutputStream(fos);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            Toast.makeText(this, "Erro ao gravar imagem:\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
         }
 
         // compartilhar a imagem com intent implícito
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("image/*");
-        share.putExtra(Intent.EXTRA_TEXT, "Imagem criada");
+        share.putExtra(Intent.EXTRA_TITLE, "Seu meme fabuloso");
         share.putExtra(Intent.EXTRA_STREAM, imageUri);
-        share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(share);
+        startActivity(Intent.createChooser(share, "Compartilhar Imagem"));
     }
 }
