@@ -50,4 +50,5 @@
     <string name="novo_texto">Novo texto</string>
     <string name="salvar">Salvar</string>
     <string name="cor_do_texto">Cor do texto</string>
+    <string name="meme_gerado">Meme gerado</string>
 </resources>
