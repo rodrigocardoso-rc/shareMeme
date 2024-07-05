@@ -1,8 +1,10 @@
 package br.ifmg.edu.bsi.progmovel.shareimage1;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -19,10 +21,12 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia;
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly;
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.exifinterface.media.ExifInterface;
 
 import java.io.BufferedOutputStream;
@@ -85,6 +89,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+    private ActivityResultLauncher<String> startWriteStoragePermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+            new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean result) {
+                    if (!result) {
+                        Toast.makeText(MainActivity.this, "Sem permissão de acesso a armazenamento do celular.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        compartilhar(null);
+                    }
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,6 +155,15 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
         } else {
+            /*
+            Em versões <= 28, é preciso solicitar a permissão WRITE_EXTERNAL_STORAGE.
+            Mais detalhes em https://developer.android.com/training/data-storage/shared/media#java.
+             */
+            int write = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (PackageManager.PERMISSION_GRANTED != write) {
+                startWriteStoragePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                return;
+            }
             contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         }
 
