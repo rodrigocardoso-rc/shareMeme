@@ -49,10 +49,14 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = result.getData();
                         if (intent != null) {
                             String novoTexto = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVO_TEXTO);
-                            String novaCor = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVA_COR);
+                            String novaCor = intent.getStringExtra(NovaCorTextoActivity.EXTRA_NOVA_COR);
                             if (novaCor == null) {
                                 Toast.makeText(MainActivity.this, "Cor desconhecida. Usando preto no lugar.", Toast.LENGTH_SHORT).show();
                                 novaCor = "BLACK";
+                            }
+                            if (novoTexto == null) {
+                                Toast.makeText(MainActivity.this, "Nenhum texto foi inserido", Toast.LENGTH_SHORT).show();
+                                novoTexto = "Olá Android!";
                             }
                             memeCreator.setTexto(novoTexto);
                             memeCreator.setCorTexto(Color.parseColor(novaCor.toUpperCase()));
@@ -116,7 +120,13 @@ public class MainActivity extends AppCompatActivity {
     public void iniciarMudarTexto(View v) {
         Intent intent = new Intent(this, NovoTextoActivity.class);
         intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_ATUAL, memeCreator.getTexto());
-        intent.putExtra(NovoTextoActivity.EXTRA_COR_ATUAL, converterCor(memeCreator.getCorTexto()));
+
+        startNovoTexto.launch(intent);
+    }
+
+    public void iniciarMudarCorTexto(View v) {
+        Intent intent = new Intent(this, NovaCorTextoActivity.class);
+        intent.putExtra(NovaCorTextoActivity.EXTRA_COR_ATUAL, converterCor(memeCreator.getCorTexto()));
 
         startNovoTexto.launch(intent);
     }
@@ -145,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void mostrarImagem() {
         imageView.setImageBitmap(memeCreator.getImagem());
+        int teste = 1;
     }
 
     public void compartilharImagem(Bitmap bitmap) {
