@@ -27,13 +27,18 @@ public class NovoTextoActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String textoAtual = intent.getStringExtra(EXTRA_TEXTO_ATUAL);
+        String corAtual = intent.getStringExtra(EXTRA_COR_ATUAL);
+
         etTexto.setText(textoAtual);
+        etCor.setText(corAtual);
     }
 
     public void enviarNovoTexto(View v) {
         String novoTexto = etTexto.getText().toString();
+        String novaCor = etCor.getText().toString();
         Intent intent = new Intent();
         intent.putExtra(EXTRA_NOVO_TEXTO, novoTexto);
+        intent.putExtra(EXTRA_NOVA_COR, novaCor);
         setResult(RESULT_OK, intent);
         finish();
     }

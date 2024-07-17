@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView;
     private MemeCreator memeCreator;
+    private float fontSize = 64.f;
     private final ActivityResultLauncher<Intent> startNovoTexto = registerForActivityResult(new StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
@@ -50,13 +51,9 @@ public class MainActivity extends AppCompatActivity {
                         if (intent != null) {
                             String novoTexto = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVO_TEXTO);
                             String novaCor = intent.getStringExtra(NovaCorTextoActivity.EXTRA_NOVA_COR);
-                            if (novaCor == null) {
+                            if (novaCor == null || novaCor.equals("")) {
                                 Toast.makeText(MainActivity.this, "Cor desconhecida. Usando preto no lugar.", Toast.LENGTH_SHORT).show();
                                 novaCor = "BLACK";
-                            }
-                            if (novoTexto == null) {
-                                Toast.makeText(MainActivity.this, "Nenhum texto foi inserido", Toast.LENGTH_SHORT).show();
-                                novoTexto = "Olá Android!";
                             }
                             memeCreator.setTexto(novoTexto);
                             memeCreator.setCorTexto(Color.parseColor(novaCor.toUpperCase()));
@@ -113,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
         Bitmap imagemFundo = BitmapFactory.decodeResource(getResources(), R.drawable.fry_meme);
 
-        memeCreator = new MemeCreator("Olá Android!", Color.WHITE, imagemFundo, getResources().getDisplayMetrics());
+        memeCreator = new MemeCreator("Olá Android!", Color.WHITE, fontSize, imagemFundo, getResources().getDisplayMetrics());
         mostrarImagem();
     }
 
@@ -155,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void mostrarImagem() {
         imageView.setImageBitmap(memeCreator.getImagem());
-        int teste = 1;
     }
 
     public void compartilharImagem(Bitmap bitmap) {
@@ -204,4 +200,17 @@ public class MainActivity extends AppCompatActivity {
         share.putExtra(Intent.EXTRA_STREAM, imageUri);
         startActivity(Intent.createChooser(share, "Compartilhar Imagem"));
     }
+
+    public void aumentarFonte(View v) {
+        fontSize = fontSize + 12.f;
+        memeCreator.updateFontSize(fontSize);
+        mostrarImagem();
+    }
+
+    public void diminuirFonte(View v) {
+        fontSize = fontSize - 12.f;
+        memeCreator.updateFontSize(fontSize);
+        mostrarImagem();
+    }
+
 }

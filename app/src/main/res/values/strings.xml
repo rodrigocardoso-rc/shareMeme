@@ -47,6 +47,8 @@
     <string name="mudar_texto">Mudar Texto</string>
     <string name="mudar_fundo">Mudar fundo</string>
     <string name="compartilhar">Compartilhar</string>
+    <string name="aumentarFont">Fonte +</string>
+    <string name="diminuirFont">Fonte -</string>
     <string name="novo_texto">Novo texto</string>
     <string name="salvar">Salvar</string>
     <string name="cor_do_texto">Cor do texto</string>
