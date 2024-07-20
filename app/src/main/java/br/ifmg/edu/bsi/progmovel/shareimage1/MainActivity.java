@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
@@ -49,14 +50,12 @@ public class MainActivity extends AppCompatActivity {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent intent = result.getData();
                         if (intent != null) {
-                            String novoTexto = intent.getStringExtra(NovoTextoActivity.EXTRA_NOVO_TEXTO);
-                            String novaCor = intent.getStringExtra(NovaCorTextoActivity.EXTRA_NOVA_COR);
-                            if (novaCor == null || novaCor.equals("")) {
-                                Toast.makeText(MainActivity.this, "Cor desconhecida. Usando preto no lugar.", Toast.LENGTH_SHORT).show();
-                                novaCor = "BLACK";
-                            }
-                            memeCreator.setTexto(novoTexto);
-                            memeCreator.setCorTexto(Color.parseColor(novaCor.toUpperCase()));
+                            Texto textoHeader = (Texto) intent.getSerializableExtra(NovoTextoActivity.EXTRA_TEXTO_HEADER);
+                            Texto textoFooter = (Texto) intent.getSerializableExtra(NovoTextoActivity.EXTRA_TEXTO_FOOTER);
+
+                            memeCreator.setTextoHeader(textoHeader);
+                            memeCreator.setTextoFooter(textoFooter);
+
                             mostrarImagem();
                         }
                     }
@@ -109,35 +108,45 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
 
         Bitmap imagemFundo = BitmapFactory.decodeResource(getResources(), R.drawable.fry_meme);
-
-        memeCreator = new MemeCreator("Olá Android!", Color.WHITE, fontSize, imagemFundo, getResources().getDisplayMetrics());
+        String text = "Olá Android!";
+        memeCreator = new MemeCreator(text, text, imagemFundo, getResources().getDisplayMetrics());
         mostrarImagem();
     }
 
-    public void iniciarMudarTexto(View v) {
+    public void iniciarMudarTextoFooter(View v) {
         Intent intent = new Intent(this, NovoTextoActivity.class);
-        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_ATUAL, memeCreator.getTexto());
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_HEADER, memeCreator.getTextoHeader());
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_FOOTER, memeCreator.getTextoFooter());
+        intent.putExtra(NovaCorTextoActivity.EXTRA_POSICAO, "Footer");
 
         startNovoTexto.launch(intent);
     }
 
-    public void iniciarMudarCorTexto(View v) {
+    public void iniciarMudarCorTextoFooter(View v) {
         Intent intent = new Intent(this, NovaCorTextoActivity.class);
-        intent.putExtra(NovaCorTextoActivity.EXTRA_COR_ATUAL, converterCor(memeCreator.getCorTexto()));
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_HEADER, memeCreator.getTextoHeader());
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_FOOTER, memeCreator.getTextoFooter());
+        intent.putExtra(NovaCorTextoActivity.EXTRA_POSICAO, "Footer");
 
         startNovoTexto.launch(intent);
     }
 
-    public String converterCor(int cor) {
-        switch (cor) {
-            case Color.BLACK: return "BLACK";
-            case Color.WHITE: return "WHITE";
-            case Color.BLUE: return "BLUE";
-            case Color.GREEN: return "GREEN";
-            case Color.RED: return "RED";
-            case Color.YELLOW: return "YELLOW";
-        }
-        return null;
+    public void iniciarMudarTextoHeader(View v) {
+        Intent intent = new Intent(this, NovoTextoActivity.class);
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_HEADER, memeCreator.getTextoHeader());
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_FOOTER, memeCreator.getTextoFooter());
+        intent.putExtra(NovaCorTextoActivity.EXTRA_POSICAO, "Header");
+
+        startNovoTexto.launch(intent);
+    }
+
+    public void iniciarMudarCorTextoHeader(View v) {
+        Intent intent = new Intent(this, NovaCorTextoActivity.class);
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_HEADER, memeCreator.getTextoHeader());
+        intent.putExtra(NovoTextoActivity.EXTRA_TEXTO_FOOTER, memeCreator.getTextoFooter());
+        intent.putExtra(NovaCorTextoActivity.EXTRA_POSICAO, "Header");
+
+        startNovoTexto.launch(intent);
     }
 
     public void iniciarMudarFundo(View v) {

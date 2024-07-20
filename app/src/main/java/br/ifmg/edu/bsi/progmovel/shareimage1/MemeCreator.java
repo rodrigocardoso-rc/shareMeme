@@ -2,6 +2,7 @@ package br.ifmg.edu.bsi.progmovel.shareimage1;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -13,39 +14,63 @@ import android.util.DisplayMetrics;
  * Você pode controlar o texto, a cor do texto e a imagem de fundo.
  */
 public class MemeCreator {
-    private String texto;
-    private int corTexto;
-    private float fonteTexto;
+    private Texto textoHeader;
+    private Texto textoFooter;
     private Bitmap fundo;
     private DisplayMetrics displayMetrics;
     private Bitmap meme;
     private boolean dirty; // se true, significa que o meme precisa ser recriado.
 
-    public MemeCreator(String texto, int corTexto, float fonteTexto, Bitmap fundo, DisplayMetrics displayMetrics) {
-        this.texto = texto;
-        this.corTexto = corTexto;
-        this.fonteTexto = fonteTexto;
+    public MemeCreator(String valueHeader, String valueFooter, Bitmap fundo, DisplayMetrics displayMetrics) {
+        this.textoFooter = new Texto(valueFooter, Color.WHITE, 64.f);
+        this.textoHeader = new Texto(valueHeader, Color.WHITE, 64.f);
         this.fundo = fundo;
         this.displayMetrics = displayMetrics;
         this.meme = criarImagem();
         this.dirty = false;
     }
 
-    public String getTexto() {
-        return texto;
+    public Texto getTextoHeader() {
+        return textoHeader;
     }
 
-    public void setTexto(String texto) {
-        this.texto = texto;
+    public Texto getTextoFooter() {
+        return textoFooter;
+    }
+
+    public String getTextoFooterValue() {
+        return textoFooter.getValue();
+    }
+
+    public void setTextoFooter(Texto texto) {
+        this.textoFooter = texto;
         dirty = true;
     }
 
-    public int getCorTexto() {
-        return corTexto;
+    public int getCorTextoFooter() {
+        return this.textoFooter.getColor();
     }
 
-    public void setCorTexto(int corTexto) {
-        this.corTexto = corTexto;
+    public void setCorTextoFooter(int corTexto) {
+        this.textoFooter.setColor(corTexto);
+        dirty = true;
+    }
+
+    public String getTextoHeaderValue() {
+        return this.textoHeader.getValue();
+    }
+
+    public void setTextoHeader(Texto texto) {
+        this.textoHeader = texto;
+        dirty = true;
+    }
+
+    public int getCorTextoHeader() {
+        return this.textoHeader.getColor();
+    }
+
+    public void setCorTextoHeader(int corTexto) {
+        this.textoFooter.setColor(corTexto);
         dirty = true;
     }
 
@@ -75,7 +100,9 @@ public class MemeCreator {
 
     public void updateFontSize(float size) {
         if (size > 0) {
-            this.fonteTexto = size;
+            this.textoHeader.setSize(size);
+            this.textoFooter.setSize(size);
+
             this.meme = criarImagem();
             dirty = false;
         }
@@ -93,21 +120,30 @@ public class MemeCreator {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
-        Paint paint = new Paint();
-
         Bitmap scaledFundo = Bitmap.createScaledBitmap(fundo, width, height, true);
         canvas.drawBitmap(scaledFundo, 0, 0, new Paint());
 
-        paint.setColor(corTexto);
-        paint.setAntiAlias(true);
-        paint.setTextSize(fonteTexto);
-        paint.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
-        paint.setTextAlign(Paint.Align.CENTER);
+        Paint paintHeader = new Paint();
+
+        paintHeader.setColor(this.textoHeader.getColor());
+        paintHeader.setAntiAlias(true);
+        paintHeader.setTextSize(this.textoHeader.getSize());
+        paintHeader.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
+        paintHeader.setTextAlign(Paint.Align.CENTER);
+
+        canvas.drawText(this.textoHeader.getValue(), (width / 2.f), (height * 0.15f), paintHeader);
+
+        Paint paintFooter = new Paint();
+
+        paintFooter.setColor(this.textoFooter.getColor());
+        paintFooter.setAntiAlias(true);
+        paintFooter.setTextSize(this.textoFooter.getSize());
+        paintFooter.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
+        paintFooter.setTextAlign(Paint.Align.CENTER);
         // desenhar texto em cima
-        //canvas.drawText(texto, (width / 2.f), (height * 0.15f), paint);
 
         // desenhar texto embaixo
-        canvas.drawText(texto, (width / 2.f), (height * 0.9f), paint);
+        canvas.drawText(textoFooter.getValue(), (width / 2.f), (height * 0.9f), paintFooter);
         return bitmap;
     }
 }
